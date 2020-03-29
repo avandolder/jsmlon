@@ -1,48 +1,50 @@
-datatype terminal =
-      LBracket
-    | RBracket
-    | LBrace
-    | RBrace
-    | Colon
-    | Comma
-    | Null
-    | Boolean of bool
-    | Number of real
-    | String of string
+datatype terminal
+  = TLBracket
+  | TRBracket
+  | TLBrace
+  | TRBrace
+  | TColon
+  | TComma
+  | TNull
+  | TBoolean of bool
+  | TNumber of real
+  | TString of string
+
+datatype value
+  = JNumber of real
+  | JBoolean of bool
+  | JNull
+  | JString of string
+  | JArray of value array
+  | JObject of (string * value) list
 
 exception ParseError
 
-fun element ts =
-  case ts of
-       LBrace :: tr => object tr
-     | LBracket :: tr => array tr
-     | Null :: tr => tr
-     | Boolean b :: tr => tr
-     | Number n :: tr => tr
-     | String s :: tr => tr
-     | _ => raise ParseError
-and object ts =
-  case ts of
-       (String key) :: Colon :: tr =>
-         (case (element tr) of
-               Comma :: tt => object tt
-             | RBrace :: tt => tt
-             | _ => raise ParseError)
-     | RBrace ::tr => tr
-     | _ => raise ParseError
-and array ts =
-  case ts of
-       RBracket :: tr => tr
-     | _ => let val tr = element ts
-            in (case tr of
-                     Comma :: tt => array tt
-                   | RBracket :: tt => tt
+fun element (TLBrace :: tr) = object tr
+  | element (TLBracket :: tr) = array tr
+  | element (TNull :: tr) = tr
+  | element (TBoolean b :: tr) = tr
+  | element (TNumber n :: tr) = tr
+  | element (TString s :: tr) = tr
+  | element _ = raise ParseError
+
+and object (TString key :: TColon :: tr) =
+    (case (element tr) of
+          TComma :: tt => object tt
+        | TRBrace :: tt => tt
+        | _ => raise ParseError)
+  | object (TRBrace :: tr) = tr
+  | object _ = raise ParseError
+
+and array (TRBracket :: ts) = ts
+  | array ts = (case (element ts) of
+                     TComma :: tr => array tr
+                   | TRBracket :: tr => tr
                    | _ => raise ParseError)
-            end
 
 fun parse ts =
   case (element ts) of
        [] => ()
      | _ => raise ParseError
 
-val () = parse [LBrace, String "key", Colon, Number 1.0, RBrace]
+val () = parse [TLBrace, TString "key", TColon, TNumber 1.0, TRBrace]
