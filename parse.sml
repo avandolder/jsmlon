@@ -26,35 +26,43 @@ structure Value = struct
     | toString (Array a) =
         "[" ^ (String.concatWith "," (List.map toString a)) ^ "]"
     | toString (Object obj) =
-        let fun join (k, v) = "\"" ^ k ^ "\": " ^ (toString v)
-        in "{" ^ (String.concatWith "," (List.map join obj)) ^ "}"
+        let
+          fun join (k, v) = "\"" ^ k ^ "\": " ^ (toString v)
+        in
+          "{" ^ (String.concatWith "," (List.map join obj)) ^ "}"
         end
 
   fun prettyString v =
-    let fun tab n = String.implode (List.tabulate (n, fn _ => #"\t"))
-        fun str _ (Array []) = "[]"
-          | str t (Array [v]) = "[" ^ (str t v) ^ "]"
-          | str t (Array a) =
-              let val tabs = tab t
-                  val itabs = tabs ^ "\t"
-              in "[\n" ^ itabs ^
-                 (String.concatWith (",\n" ^ itabs)
-                    (List.map (str (t + 1)) a)) ^
-                 "\n" ^ tabs ^ "]"
-              end
-          | str _ (Object []) = "{}"
-          | str t (Object obj) =
-              let val tabs = tab t
-                  val itabs = tabs ^ "\t"
-                  fun join t (k, v) = "\"" ^ k ^ "\": " ^ (str t v)
-              in "{\n" ^ itabs ^
-                 (String.concatWith (",\n" ^ itabs)
-                    (List.map (join (t + 1)) obj)) ^
-                 "\n" ^ tabs ^ "}"
-              end
-          | str _ v = toString v
-    in str 0 v
-  end
+    let
+      fun tab n = String.implode (List.tabulate (n, fn _ => #"\t"))
+      fun str _ (Array []) = "[]"
+        | str t (Array [v]) = "[" ^ (str t v) ^ "]"
+        | str t (Array a) =
+            let
+              val tabs = tab t
+              val itabs = tabs ^ "\t"
+            in
+              "[\n" ^ itabs ^
+              (String.concatWith (",\n" ^ itabs)
+                (List.map (str (t + 1)) a)) ^
+              "\n" ^ tabs ^ "]"
+            end
+        | str _ (Object []) = "{}"
+        | str t (Object obj) =
+            let
+              val tabs = tab t
+              val itabs = tabs ^ "\t"
+              fun join t (k, v) = "\"" ^ k ^ "\": " ^ (str t v)
+            in
+              "{\n" ^ itabs ^
+              (String.concatWith (",\n" ^ itabs)
+                (List.map (join (t + 1)) obj)) ^
+              "\n" ^ tabs ^ "}"
+            end
+        | str _ v = toString v
+    in
+      str 0 v
+    end
 end
 
 exception ParseError
