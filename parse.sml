@@ -32,28 +32,27 @@ structure Value = struct
 
   fun prettyString v =
     let fun tab n = String.implode (List.tabulate (n, fn _ => #"\t"))
-        fun str _ (Number n) = Real.toString n
-          | str _ (Bool b) = Bool.toString b
-          | str _ (String s) = "\"" ^ s ^ "\""
-          | str _ Null = "null"
-          | str _ (Array []) = "[]"
+        fun str _ (Array []) = "[]"
           | str t (Array [v]) = "[" ^ (str t v) ^ "]"
           | str t (Array a) =
               let val tabs = tab t
-              in "[\n" ^ tabs ^
-                 (String.concatWith (",\n" ^ tabs)
+                  val itabs = tabs ^ "\t"
+              in "[\n" ^ itabs ^
+                 (String.concatWith (",\n" ^ itabs)
                     (List.map (str (t + 1)) a)) ^
                  "\n" ^ tabs ^ "]"
               end
           | str _ (Object []) = "{}"
           | str t (Object obj) =
               let val tabs = tab t
+                  val itabs = tabs ^ "\t"
                   fun join t (k, v) = "\"" ^ k ^ "\": " ^ (str t v)
-              in "{\n" ^ (tab (t + 1)) ^
-                 (String.concatWith (",\n" ^ (tab (t + 1)))
+              in "{\n" ^ itabs ^
+                 (String.concatWith (",\n" ^ itabs)
                     (List.map (join (t + 1)) obj)) ^
                  "\n" ^ tabs ^ "}"
               end
+          | str _ v = toString v
     in str 0 v
   end
 end
