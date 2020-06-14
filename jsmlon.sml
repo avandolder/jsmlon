@@ -27,7 +27,7 @@ structure JSValue = struct
         "[" ^ (String.concatWith "," (List.map toString a)) ^ "]"
     | toString (Object obj) =
         let
-          fun join (k, v) = "\"" ^ k ^ "\": " ^ (toString v)
+          fun join (k, v) = "\"" ^ k ^ "\":" ^ (toString v)
         in
           "{" ^ (String.concatWith "," (List.map join obj)) ^ "}"
         end
@@ -155,7 +155,7 @@ structure Scan = struct
         | token _ = raise ParseError
       fun scanChar name (c :: cs) =
             if Char.isAlpha c then scanChar (c :: name) cs
-            else scan cs ((token (toName name)) :: ts)
+            else scan (c :: cs) ((token (toName name)) :: ts)
         | scanChar name [] = (token (toName name)) :: ts
     in
       scanChar [] cs
@@ -174,19 +174,19 @@ structure Parse = struct
     | element _ = raise ParseError
 
   and object (TString k :: TColon :: ts) (JSValue.Object obj) =
-      (case (element ts) of
+        (case element ts of
             (TComma :: tr, v) => object tr (JSValue.Object ((k, v) :: obj))
           | (TRBrace :: tr, v) => (tr, JSValue.Object ((k, v) :: obj))
           | _ => raise ParseError)
     | object (TRBrace :: ts) obj = (ts, obj)
     | object _ _ = raise ParseError
 
-  and array ts (JSValue.Array a) =
-      (case (element ts) of
+  and array (TRBracket :: ts) a = (ts, a)
+    | array ts (JSValue.Array a) =
+        (case element ts of
             (TComma :: tr, e) => array tr (JSValue.Array (e :: a))
           | (TRBracket :: tr, e) => (tr, JSValue.Array (e :: a))
           | _ => raise ParseError)
-    | array (TRBracket :: ts) a = (ts, a)
     | array _ _ = raise ParseError
 end
 
@@ -195,9 +195,6 @@ fun parse ts =
        ([], v) => v
      | _ => raise ParseError
 
-val v = parse [TLBrace, TString "key", TColon, TNumber 0.01, TRBrace]
-val () = print ((JSValue.prettyString v) ^ "\n")
-
-val tokens = scan (JSValue.toString v)
+val tokens = scan "{\"key\": 1, \"val\": [null, true, false]}"
 val value = parse tokens
 val () = print ((JSValue.toString value) ^ "\n")
